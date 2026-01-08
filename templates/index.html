@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Number Guessing Game</title>
+    <link rel="stylesheet" href="./static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Number Guessing Game</h1>
+      <div id="setup">
+        <input type="number" id="start" placeholder="Start Range" />
+        <input type="number" id="end" placeholder="End Range" />
+        <button id="begin">Start Game</button>
+      </div>
+      <div id="game" style="display: none">
+        <p id="guess-text"></p>
+        <div class="btn-group">
+          <button onclick="respond('yes')">Yes</button>
+          <button onclick="respond('greater')">Greater</button>
+          <button onclick="respond('lesser')">Lesser</button>
+        </div>
+      </div>
+      <p id="result"></p>
+    </div>
+
+    <!-- Confetti Script -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+      document.getElementById("begin").onclick = function () {
+        const start = document.getElementById("start").value;
+        const end = document.getElementById("end").value;
+        if (!start || !end || start > end) {
+          alert("Please enter valid start and end ranges (start ≤ end).");
+          return;
+        }
+        fetch("/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ start: start, end: end }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("setup").style.display = "none";
+            document.getElementById("result").innerText = "";
+            document.getElementById("game").style.display = "block";
+            document.getElementById(
+              "guess-text"
+            ).innerText = `Is your number ${data.guess}?`;
+          });
+      };
+
+      function respond(response) {
+        fetch("/respond", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ response: response }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.done) {
+              document.getElementById("game").style.display = "none";
+              document.getElementById("result").innerText = data.message;
+
+              // Confetti celebration blast
+              confetti({
+                particleCount: 200,
+                spread: 100,
+                origin: { y: 0.6 },
+                colors: ["#bb0000", "#ffffff", "#ff6f61", "#4caf50", "#2196f3"],
+              });
+            } else {
+              document.getElementById(
+                "guess-text"
+              ).innerText = `Is your number ${data.guess}?`;
+            }
+          });
+      }
+    </script>
+  </body>
+</html>
